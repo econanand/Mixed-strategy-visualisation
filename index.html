@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mixed Strategy Nash Equilibrium Visualizer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+  <style>
+    :root {
+      --bg-page:    #0f0f1a;
+      --bg-card:    #1a1a2e;
+      --bg-input:   #252540;
+      --border:     #2a2a4a;
+      --border-hi:  #4a9eff;
+      --text:       #e2e8f0;
+      --text-dim:   #9ca3af;
+      --blue:       #2196F3;
+      --red:        #FF5722;
+      --purple:     #9C27B0;
+      --orange:     #FF9800;
+      --green:      #4CAF50;
+      --gold:       #FFD700;
+      --slate:      #607D8B;
+      --radius:     10px;
+      --shadow:     0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%);
+      padding: 18px 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+    }
+
+    header h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+    }
+
+    header p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 4px;
+    }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    /* ── Payoff Matrix ── */
+    .matrix-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .matrix-legend {
+      display: flex;
+      gap: 14px;
+      font-size: 0.75rem;
+      margin-bottom: 6px;
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .matrix-table {
+      border-collapse: separate;
+      border-spacing: 5px;
+    }
+
+    .matrix-table th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 4px 8px;
+      text-align: center;
+    }
+
+    .matrix-table th.col-header {
+      color: var(--orange);
+    }
+
+    .matrix-table th.row-header {
+      color: var(--blue);
+      text-align: right;
+    }
+
+    .payoff-cell {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      min-width: 120px;
+    }
+
+    .payoff-cell span {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .payoff-input {
+      width: 46px;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      color: var(--text);
+      font-size: 0.88rem;
+      text-align: center;
+      padding: 2px 0;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    .payoff-input::-webkit-outer-spin-button,
+    .payoff-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .payoff-input:focus {
+      outline: none;
+      border-bottom-color: var(--border-hi);
+    }
+
+    .payoff-input.row-payoff { color: #60b4ff; }
+    .payoff-input.col-payoff { color: #ffb74d; }
+
+    /* ── Nash Info Panel ── */
+    .nash-box {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    .nash-box.has-mixed {
+      background: rgba(76, 175, 80, 0.12);
+      border: 1px solid rgba(76, 175, 80, 0.5);
+    }
+
+    .nash-box.has-pure {
+      background: rgba(255, 152, 0, 0.12);
+      border: 1px solid rgba(255, 152, 0, 0.5);
+    }
+
+    .nash-box.no-ne {
+      background: rgba(255, 87, 34, 0.1);
+      border: 1px solid rgba(255, 87, 34, 0.4);
+    }
+
+    .nash-box strong {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .nash-val {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .nash-val-item {
+      text-align: center;
+      flex: 1;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+
+    .nash-val-item .label { font-size: 0.7rem; color: var(--text-dim); }
+    .nash-val-item .value { font-size: 1.05rem; font-weight: 700; color: var(--gold); }
+
+    /* ── Sliders ── */
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-label {
+      font-size: 0.82rem;
+      min-width: 80px;
+      color: var(--text-dim);
+    }
+
+    .slider-label span {
+      font-style: italic;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--blue);
+      cursor: pointer;
+      height: 5px;
+    }
+
+    .slider-val {
+      min-width: 36px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #slider-p + .slider-val, .p-color { color: var(--green); }
+    #slider-q + .slider-val, .q-color { color: var(--purple); }
+
+    /* ── Preset buttons ── */
+    .preset-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .preset-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-preset {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-preset:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+    }
+
+    /* ── Graphs ── */
+    .graph-card {
+      padding: 12px;
+    }
+
+    .graph-div {
+      width: 100%;
+      height: 280px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mixed Strategy Nash Equilibrium Visualizer</h1>
+  <p>
+    2×2 game with Row and Column players, each choosing between strategies A and B.
+    <em>p</em> = P(Col plays A), <em>q</em> = P(Row plays A).
+  </p>
+</header>
+
+<div class="app-layout">
+
+  <!-- ════ LEFT PANEL ════ -->
+  <aside class="left-panel">
+
+    <!-- Payoff Matrix -->
+    <div class="card">
+      <div class="card-title">Payoff Matrix</div>
+      <div class="matrix-wrap">
+        <div class="matrix-legend">
+          <span><span class="legend-dot" style="background:#60b4ff"></span>Row payoff</span>
+          <span><span class="legend-dot" style="background:#ffb74d"></span>Col payoff</span>
+        </div>
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="col-header">Col: A</th>
+              <th class="col-header">Col: B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th class="row-header">Row: A</th>
+              <td>
+                <div class="payoff-cell">
+                  <input id="R_AA" class="payoff-input row-payoff" type="number" step="0.5" value="1" />
+                  <span>,</span>
+                  <input id="C_AA" class="payoff-input col-payoff" type="number" step="0.5" value="-1" />
+                </div>
+              </td>
+              <td>
+                <div class="payoff-cell">
+                  <input id="R_AB" class="payoff-input row-payoff" type="number" step="0.5" value="-1" />
+                  <span>,</span>
+                  <input id="C_AB" class="payoff-input col-payoff" type="number" step="0.5" value="1" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th class="row-header">Row: B</th>
+              <td>
+                <div class="payoff-cell">
+                  <input id="R_BA" class="payoff-input row-payoff" type="number" step="0.5" value="-1" />
+                  <span>,</span>
+                  <input id="C_BA" class="payoff-input col-payoff" type="number" step="0.5" value="1" />
+                </div>
+              </td>
+              <td>
+                <div class="payoff-cell">
+                  <input id="R_BB" class="payoff-input row-payoff" type="number" step="0.5" value="1" />
+                  <span>,</span>
+                  <input id="C_BB" class="payoff-input col-payoff" type="number" step="0.5" value="-1" />
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Nash Equilibrium Info -->
+    <div class="card">
+      <div class="card-title">Nash Equilibrium</div>
+      <div id="nash-info"></div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="card">
+      <div class="card-title">Mixed Strategy Probabilities</div>
+      <div class="slider-group">
+        <div class="slider-row">
+          <div class="slider-label"><span>p</span> = P(Col: A)</div>
+          <input id="slider-p" type="range" min="0" max="1" step="0.01" value="0.5" />
+          <div class="slider-val" id="display-p" style="color:var(--green)">0.50</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>q</span> = P(Row: A)</div>
+          <input id="slider-q" type="range" min="0" max="1" step="0.01" value="0.5" />
+          <div class="slider-val" id="display-q" style="color:var(--purple)">0.50</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Presets -->
+    <div class="card">
+      <div class="card-title">Game Presets</div>
+      <div class="preset-section">
+        <div class="preset-row">
+          <button class="btn-preset" data-preset="matching_pennies">Matching Pennies</button>
+          <button class="btn-preset" data-preset="battle_of_sexes">Battle of Sexes</button>
+        </div>
+        <div class="preset-row">
+          <button class="btn-preset" data-preset="hawk_dove">Hawk-Dove</button>
+          <button class="btn-preset" data-preset="prisoners_dilemma">Prisoner's Dilemma</button>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ════ RIGHT PANEL ════ -->
+  <div class="right-panel">
+
+    <div class="card graph-card">
+      <div class="card-title">
+        Graph 1 — Row Player Expected Payoffs vs <em>p</em>
+      </div>
+      <div id="graph1" class="graph-div"></div>
+    </div>
+
+    <div class="card graph-card">
+      <div class="card-title">
+        Graph 2 — Column Player Expected Payoffs vs <em>q</em>
+      </div>
+      <div id="graph2" class="graph-div"></div>
+    </div>
+
+    <div class="card graph-card">
+      <div class="card-title">
+        Graph 3 — Best Response Functions &amp; Nash Equilibrium
+      </div>
+      <div id="graph3" class="graph-div"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+const state = {
+  R: { AA: 1, AB: -1, BA: -1, BB: 1 },
+  C: { AA: -1, AB: 1, BA: 1, BB: -1 },
+  p: 0.5,
+  q: 0.5,
+  pStar: null,
+  qStar: null
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESETS
+═══════════════════════════════════════════════════════════════ */
+const PRESETS = {
+  matching_pennies: {
+    R: { AA: 1,  AB: -1, BA: -1, BB: 1  },
+    C: { AA: -1, AB: 1,  BA: 1,  BB: -1 }
+  },
+  battle_of_sexes: {
+    R: { AA: 2, AB: 0, BA: 0, BB: 1 },
+    C: { AA: 1, AB: 0, BA: 0, BB: 2 }
+  },
+  hawk_dove: {
+    R: { AA: -1, AB: 2, BA: 0, BB: 0 },
+    C: { AA: -1, AB: 0, BA: 2, BB: 0 }
+  },
+  prisoners_dilemma: {
+    R: { AA: 3, AB: 0, BA: 5, BB: 1 },
+    C: { AA: 3, AB: 5, BA: 0, BB: 1 }
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   MATH ENGINE
+═══════════════════════════════════════════════════════════════ */
+
+/**
+ * p* = (R_BB - R_AB) / ((R_AA - R_BA) - (R_AB - R_BB))
+ * Returns the raw value (may be outside [0,1]); null if denominator ≈ 0.
+ */
+function computePStar(R) {
+  const denom = (R.AA - R.BA) - (R.AB - R.BB);
+  if (Math.abs(denom) < 1e-10) return null;
+  return (R.BB - R.AB) / denom;
+}
+
+/**
+ * q* = (C_BB - C_BA) / ((C_AA - C_AB) - (C_BA - C_BB))
+ * Returns raw value; null if denominator ≈ 0.
+ */
+function computeQStar(C) {
+  const denom = (C.AA - C.AB) - (C.BA - C.BB);
+  if (Math.abs(denom) < 1e-10) return null;
+  return (C.BB - C.BA) / denom;
+}
+
+function inUnit(v) { return v !== null && v >= 0 && v <= 1; }
+
+function linspace(n = 101) {
+  return Array.from({ length: n }, (_, i) => i / (n - 1));
+}
+
+function rowExpPayoffs(R, pArr) {
+  return {
+    eA: pArr.map(p => R.AA * p + R.AB * (1 - p)),
+    eB: pArr.map(p => R.BA * p + R.BB * (1 - p))
+  };
+}
+
+function colExpPayoffs(C, qArr) {
+  return {
+    eA: qArr.map(q => C.AA * q + C.BA * (1 - q)),
+    eB: qArr.map(q => C.AB * q + C.BB * (1 - q))
+  };
+}
+
+/** Check all four pure strategy profiles for Nash equilibria */
+function findPureNE(R, C) {
+  const results = [];
+  const profiles = [
+    { name: '(A,A)', rPay: R.AA, rAlt: R.BA, cPay: C.AA, cAlt: C.AB },
+    { name: '(A,B)', rPay: R.AB, rAlt: R.BB, cPay: C.AB, cAlt: C.AA },
+    { name: '(B,A)', rPay: R.BA, rAlt: R.AA, cPay: C.BA, cAlt: C.BB },
+    { name: '(B,B)', rPay: R.BB, rAlt: R.AB, cPay: C.BB, cAlt: C.BA }
+  ];
+  for (const prof of profiles) {
+    if (prof.rPay >= prof.rAlt && prof.cPay >= prof.cAlt) {
+      results.push(prof.name);
+    }
+  }
+  return results;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLOTLY HELPERS
+═══════════════════════════════════════════════════════════════ */
+const COLORS = {
+  rowA: '#2196F3',
+  rowB: '#FF5722',
+  colA: '#9C27B0',
+  colB: '#FF9800',
+  ne:   '#FFD700',
+  cur:  '#607D8B'
+};
+
+const BASE_LAYOUT = {
+  paper_bgcolor: '#1a1a2e',
+  plot_bgcolor:  '#0f0f1a',
+  font: { family: 'Segoe UI, system-ui, sans-serif', size: 11, color: '#e2e8f0' },
+  xaxis: { gridcolor: '#2a2a4a', zerolinecolor: '#3a3a5a', linecolor: '#3a3a5a' },
+  yaxis: { gridcolor: '#2a2a4a', zerolinecolor: '#3a3a5a', linecolor: '#3a3a5a' },
+  legend: { bgcolor: 'rgba(0,0,0,0)', bordercolor: '#2a2a4a', font: { size: 10 } },
+  margin: { t: 10, b: 48, l: 54, r: 20 },
+  hovermode: 'x unified'
+};
+
+const PLOTLY_CFG = { responsive: true, displayModeBar: false };
+
+function mergeLayout(extra) {
+  return Object.assign({}, BASE_LAYOUT, extra, {
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis, extra.xaxis || {}),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, extra.yaxis || {})
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRAPH 1: ROW PAYOFFS vs p
+═══════════════════════════════════════════════════════════════ */
+function buildGraph1(s) {
+  const xs = linspace(101);
+  const { eA, eB } = rowExpPayoffs(s.R, xs);
+  const pStar = s.pStar;
+  const p = s.p;
+
+  const traces = [
+    {
+      x: xs, y: eA, mode: 'lines', name: 'E[Row plays A]',
+      line: { color: COLORS.rowA, width: 2.5 }
+    },
+    {
+      x: xs, y: eB, mode: 'lines', name: 'E[Row plays B]',
+      line: { color: COLORS.rowB, width: 2.5 }
+    }
+  ];
+
+  // Intersection marker at p*
+  const shapes = [], annotations = [];
+  if (inUnit(pStar)) {
+    const yAtStar = s.R.AA * pStar + s.R.AB * (1 - pStar);
+    traces.push({
+      x: [pStar], y: [yAtStar],
+      mode: 'markers', name: `p* = ${pStar.toFixed(3)}`,
+      marker: { color: COLORS.ne, size: 11, symbol: 'star',
+                line: { color: '#fff', width: 1 } }
+    });
+    shapes.push({
+      type: 'line', x0: pStar, x1: pStar, y0: 0, y1: 1, yref: 'paper',
+      line: { color: COLORS.ne, width: 1.2, dash: 'dot' }
+    });
+    annotations.push({
+      x: pStar, y: 1, yref: 'paper', yanchor: 'bottom',
+      text: `p*=${pStar.toFixed(3)}`, showarrow: false,
+      xanchor: 'left', font: { color: COLORS.ne, size: 10 }
+    });
+  }
+
+  // Slider highlight: dot on each line at current p
+  const eA_p = s.R.AA * p + s.R.AB * (1 - p);
+  const eB_p = s.R.BA * p + s.R.BB * (1 - p);
+  traces.push({
+    x: [p], y: [eA_p], mode: 'markers', showlegend: false,
+    marker: { color: COLORS.rowA, size: 9, symbol: 'circle',
+              line: { color: '#fff', width: 1.5 } },
+    hovertemplate: `p=${p.toFixed(2)}<br>E[Row A]=%{y:.3f}<extra></extra>`
+  });
+  traces.push({
+    x: [p], y: [eB_p], mode: 'markers', showlegend: false,
+    marker: { color: COLORS.rowB, size: 9, symbol: 'circle',
+              line: { color: '#fff', width: 1.5 } },
+    hovertemplate: `p=${p.toFixed(2)}<br>E[Row B]=%{y:.3f}<extra></extra>`
+  });
+
+  // Vertical guide line at current p
+  shapes.push({
+    type: 'line', x0: p, x1: p, y0: 0, y1: 1, yref: 'paper',
+    line: { color: COLORS.cur, width: 1, dash: 'dot' }
+  });
+
+  const layout = mergeLayout({
+    xaxis: { title: 'p  (prob. Col plays A)', range: [0, 1] },
+    yaxis: { title: 'Expected payoff' },
+    shapes, annotations
+  });
+
+  return { traces, layout };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRAPH 2: COL PAYOFFS vs q
+═══════════════════════════════════════════════════════════════ */
+function buildGraph2(s) {
+  const xs = linspace(101);
+  const { eA, eB } = colExpPayoffs(s.C, xs);
+  const qStar = s.qStar;
+  const q = s.q;
+
+  const traces = [
+    {
+      x: xs, y: eA, mode: 'lines', name: 'E[Col plays A]',
+      line: { color: COLORS.colA, width: 2.5 }
+    },
+    {
+      x: xs, y: eB, mode: 'lines', name: 'E[Col plays B]',
+      line: { color: COLORS.colB, width: 2.5 }
+    }
+  ];
+
+  const shapes = [], annotations = [];
+  if (inUnit(qStar)) {
+    const yAtStar = s.C.AA * qStar + s.C.BA * (1 - qStar);
+    traces.push({
+      x: [qStar], y: [yAtStar],
+      mode: 'markers', name: `q* = ${qStar.toFixed(3)}`,
+      marker: { color: COLORS.ne, size: 11, symbol: 'star',
+                line: { color: '#fff', width: 1 } }
+    });
+    shapes.push({
+      type: 'line', x0: qStar, x1: qStar, y0: 0, y1: 1, yref: 'paper',
+      line: { color: COLORS.ne, width: 1.2, dash: 'dot' }
+    });
+    annotations.push({
+      x: qStar, y: 1, yref: 'paper', yanchor: 'bottom',
+      text: `q*=${qStar.toFixed(3)}`, showarrow: false,
+      xanchor: 'left', font: { color: COLORS.ne, size: 10 }
+    });
+  }
+
+  const eA_q = s.C.AA * q + s.C.BA * (1 - q);
+  const eB_q = s.C.AB * q + s.C.BB * (1 - q);
+  traces.push({
+    x: [q], y: [eA_q], mode: 'markers', showlegend: false,
+    marker: { color: COLORS.colA, size: 9, symbol: 'circle',
+              line: { color: '#fff', width: 1.5 } },
+    hovertemplate: `q=${q.toFixed(2)}<br>E[Col A]=%{y:.3f}<extra></extra>`
+  });
+  traces.push({
+    x: [q], y: [eB_q], mode: 'markers', showlegend: false,
+    marker: { color: COLORS.colB, size: 9, symbol: 'circle',
+              line: { color: '#fff', width: 1.5 } },
+    hovertemplate: `q=${q.toFixed(2)}<br>E[Col B]=%{y:.3f}<extra></extra>`
+  });
+
+  shapes.push({
+    type: 'line', x0: q, x1: q, y0: 0, y1: 1, yref: 'paper',
+    line: { color: COLORS.cur, width: 1, dash: 'dot' }
+  });
+
+  const layout = mergeLayout({
+    xaxis: { title: 'q  (prob. Row plays A)', range: [0, 1] },
+    yaxis: { title: 'Expected payoff' },
+    shapes, annotations
+  });
+
+  return { traces, layout };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRAPH 3: BEST RESPONSE FUNCTIONS
+═══════════════════════════════════════════════════════════════ */
+
+/**
+ * q_BR(p): Row's best response.
+ * If p < p*: Row prefers whichever pure strategy dominates at that p.
+ *   At p=0 (Col always plays B): Row prefers A if R.AB > R.BB, else B.
+ *   At p=1 (Col always plays A): Row prefers A if R.AA > R.BA, else B.
+ * The vertical segment at p* represents Row's indifference (any q is BR).
+ */
+function buildQBR(s) {
+  const pStar = s.pStar;
+  const traces = [];
+
+  // Determine which q Row prefers on each side of p*
+  const qAtP0 = (s.R.AB > s.R.BB) ? 1 : (s.R.AB < s.R.BB ? 0 : 0.5);
+  const qAtP1 = (s.R.AA > s.R.BA) ? 1 : (s.R.AA < s.R.BA ? 0 : 0.5);
+
+  if (!inUnit(pStar)) {
+    // No interior p*: q_BR is flat across [0,1]
+    // Use midpoint to decide which side
+    const qFlat = (pStar === null || (pStar !== null && pStar < 0)) ? qAtP0 : qAtP1;
+    // Actually: if pStar<0, dominant strategy is same as at p=0;
+    //           if pStar>1, dominant strategy is same as at p=1
+    let qUse;
+    if (pStar === null) {
+      qUse = qAtP0; // parallel lines - check at p=0
+    } else if (pStar < 0) {
+      qUse = qAtP1; // p* left of 0: q_BR = value for p>p* everywhere in [0,1]
+    } else {
+      qUse = qAtP0; // p* right of 1: q_BR = value for p<p* everywhere in [0,1]
+    }
+    traces.push({
+      x: [0, 1], y: [qUse, qUse], mode: 'lines',
+      name: "q_BR(p)  [Row's BR]",
+      line: { color: COLORS.rowA, width: 3 }
+    });
+  } else {
+    // Left segment: p in [0, p*], q = qAtP0
+    traces.push({
+      x: [0, pStar], y: [qAtP0, qAtP0], mode: 'lines',
+      name: "q_BR(p)  [Row's BR]",
+      line: { color: COLORS.rowA, width: 3 }
+    });
+    // Vertical segment at p*: q in [0,1]
+    traces.push({
+      x: [pStar, pStar], y: [0, 1], mode: 'lines', showlegend: false,
+      line: { color: COLORS.rowA, width: 3, dash: 'dot' }
+    });
+    // Right segment: p in [p*, 1], q = qAtP1
+    traces.push({
+      x: [pStar, 1], y: [qAtP1, qAtP1], mode: 'lines', showlegend: false,
+      line: { color: COLORS.rowA, width: 3 }
+    });
+  }
+
+  return traces;
+}
+
+/**
+ * p_BR(q): Col's best response.
+ * At q=0 (Row always plays B): Col prefers A if C.BA > C.BB, else B.
+ * At q=1 (Row always plays A): Col prefers A if C.AA > C.AB, else B.
+ * Horizontal segment at q* represents Col's indifference.
+ */
+function buildPBR(s) {
+  const qStar = s.qStar;
+  const traces = [];
+
+  const pAtQ0 = (s.C.BA > s.C.BB) ? 1 : (s.C.BA < s.C.BB ? 0 : 0.5);
+  const pAtQ1 = (s.C.AA > s.C.AB) ? 1 : (s.C.AA < s.C.AB ? 0 : 0.5);
+
+  if (!inUnit(qStar)) {
+    let pUse;
+    if (qStar === null) {
+      pUse = pAtQ0;
+    } else if (qStar < 0) {
+      pUse = pAtQ1;
+    } else {
+      pUse = pAtQ0;
+    }
+    traces.push({
+      x: [pUse, pUse], y: [0, 1], mode: 'lines',
+      name: "p_BR(q)  [Col's BR]",
+      line: { color: COLORS.colA, width: 3 }
+    });
+  } else {
+    // Bottom segment: q in [0, q*], p = pAtQ0
+    traces.push({
+      x: [pAtQ0, pAtQ0], y: [0, qStar], mode: 'lines',
+      name: "p_BR(q)  [Col's BR]",
+      line: { color: COLORS.colA, width: 3 }
+    });
+    // Horizontal segment at q*: p in [0,1]
+    traces.push({
+      x: [0, 1], y: [qStar, qStar], mode: 'lines', showlegend: false,
+      line: { color: COLORS.colA, width: 3, dash: 'dot' }
+    });
+    // Top segment: q in [q*, 1], p = pAtQ1
+    traces.push({
+      x: [pAtQ1, pAtQ1], y: [qStar, 1], mode: 'lines', showlegend: false,
+      line: { color: COLORS.colA, width: 3 }
+    });
+  }
+
+  return traces;
+}
+
+function buildGraph3(s) {
+  const traces = [
+    ...buildQBR(s),
+    ...buildPBR(s)
+  ];
+
+  // Nash equilibrium star
+  if (inUnit(s.pStar) && inUnit(s.qStar)) {
+    traces.push({
+      x: [s.pStar], y: [s.qStar],
+      mode: 'markers+text',
+      name: `NE: (${s.pStar.toFixed(2)}, ${s.qStar.toFixed(2)})`,
+      text: [`  (${s.pStar.toFixed(2)}, ${s.qStar.toFixed(2)})`],
+      textposition: 'middle right',
+      textfont: { color: COLORS.ne, size: 10 },
+      marker: { color: COLORS.ne, size: 14, symbol: 'star',
+                line: { color: '#fff', width: 1.5 } }
+    });
+  }
+
+  // Current (p, q) from sliders
+  traces.push({
+    x: [s.p], y: [s.q],
+    mode: 'markers',
+    name: `Current (p=${s.p.toFixed(2)}, q=${s.q.toFixed(2)})`,
+    marker: { color: COLORS.cur, size: 11, symbol: 'diamond',
+              line: { color: '#fff', width: 1.5 } }
+  });
+
+  const layout = mergeLayout({
+    xaxis: { title: 'p  (prob. Col plays A)', range: [-0.02, 1.02] },
+    yaxis: { title: 'q  (prob. Row plays A)', range: [-0.02, 1.02] },
+    hovermode: 'closest'
+  });
+
+  return { traces, layout };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NASH INFO PANEL
+═══════════════════════════════════════════════════════════════ */
+function updateNashPanel(s) {
+  const box = document.getElementById('nash-info');
+  const pStar = s.pStar;
+  const qStar = s.qStar;
+  const pOk = inUnit(pStar);
+  const qOk = inUnit(qStar);
+
+  if (pOk && qOk) {
+    box.innerHTML = `
+      <div class="nash-box has-mixed">
+        <strong style="color:#4CAF50">Mixed Strategy Nash Equilibrium</strong>
+        <div class="nash-val">
+          <div class="nash-val-item">
+            <div class="label">p*</div>
+            <div class="value">${pStar.toFixed(4)}</div>
+          </div>
+          <div class="nash-val-item">
+            <div class="label">q*</div>
+            <div class="value">${qStar.toFixed(4)}</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    const pureNE = findPureNE(s.R, s.C);
+    let msg = '';
+
+    if (pStar === null) msg += 'Row payoff lines are parallel (no interior p*). ';
+    else if (!pOk)      msg += `p* = ${pStar.toFixed(3)} ∉ [0,1]. `;
+    if (qStar === null) msg += 'Col payoff lines are parallel (no interior q*). ';
+    else if (!qOk)      msg += `q* = ${qStar.toFixed(3)} ∉ [0,1]. `;
+
+    if (pureNE.length > 0) {
+      box.innerHTML = `
+        <div class="nash-box has-pure">
+          <strong style="color:#FF9800">Pure Strategy Nash Equilibria</strong>
+          <div style="margin-bottom:6px">${pureNE.join(', ')}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim)">${msg}</div>
+        </div>`;
+    } else {
+      box.innerHTML = `
+        <div class="nash-box no-ne">
+          <strong style="color:#FF5722">No Nash Equilibrium Found</strong>
+          <div style="font-size:0.75rem;color:var(--text-dim)">${msg}</div>
+        </div>`;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════ */
+function render() {
+  const g1 = buildGraph1(state);
+  const g2 = buildGraph2(state);
+  const g3 = buildGraph3(state);
+
+  Plotly.react('graph1', g1.traces, g1.layout, PLOTLY_CFG);
+  Plotly.react('graph2', g2.traces, g2.layout, PLOTLY_CFG);
+  Plotly.react('graph3', g3.traces, g3.layout, PLOTLY_CFG);
+
+  updateNashPanel(state);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DOM ↔ STATE SYNC
+═══════════════════════════════════════════════════════════════ */
+function readMatrix() {
+  const keys = ['AA', 'AB', 'BA', 'BB'];
+  keys.forEach(k => {
+    const rv = parseFloat(document.getElementById(`R_${k}`).value);
+    const cv = parseFloat(document.getElementById(`C_${k}`).value);
+    state.R[k] = isNaN(rv) ? 0 : rv;
+    state.C[k] = isNaN(cv) ? 0 : cv;
+  });
+}
+
+function writeMatrix() {
+  const keys = ['AA', 'AB', 'BA', 'BB'];
+  keys.forEach(k => {
+    document.getElementById(`R_${k}`).value = state.R[k];
+    document.getElementById(`C_${k}`).value = state.C[k];
+  });
+}
+
+function snapSlidersToNash() {
+  const pSnap = inUnit(state.pStar) ? state.pStar : 0.5;
+  const qSnap = inUnit(state.qStar) ? state.qStar : 0.5;
+
+  state.p = pSnap;
+  state.q = qSnap;
+
+  const sp = document.getElementById('slider-p');
+  const sq = document.getElementById('slider-q');
+  sp.value = pSnap;
+  sq.value = qSnap;
+  document.getElementById('display-p').textContent = pSnap.toFixed(2);
+  document.getElementById('display-q').textContent = qSnap.toFixed(2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FULL UPDATE (matrix changed)
+═══════════════════════════════════════════════════════════════ */
+function fullUpdate() {
+  readMatrix();
+  state.pStar = computePStar(state.R);
+  state.qStar = computeQStar(state.C);
+  snapSlidersToNash();
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDER-ONLY UPDATE
+═══════════════════════════════════════════════════════════════ */
+function sliderUpdate() {
+  state.p = parseFloat(document.getElementById('slider-p').value);
+  state.q = parseFloat(document.getElementById('slider-q').value);
+  document.getElementById('display-p').textContent = state.p.toFixed(2);
+  document.getElementById('display-q').textContent = state.q.toFixed(2);
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEBOUNCE
+═══════════════════════════════════════════════════════════════ */
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Compute initial equilibrium (Matching Pennies → p*=q*=0.5)
+  state.pStar = computePStar(state.R);
+  state.qStar = computeQStar(state.C);
+  snapSlidersToNash();
+
+  // Initial render (using newPlot for first call)
+  const g1 = buildGraph1(state);
+  const g2 = buildGraph2(state);
+  const g3 = buildGraph3(state);
+  Plotly.newPlot('graph1', g1.traces, g1.layout, PLOTLY_CFG);
+  Plotly.newPlot('graph2', g2.traces, g2.layout, PLOTLY_CFG);
+  Plotly.newPlot('graph3', g3.traces, g3.layout, PLOTLY_CFG);
+  updateNashPanel(state);
+
+  // ── Matrix inputs
+  const debouncedFull = debounce(fullUpdate, 150);
+  ['R_AA','R_AB','R_BA','R_BB','C_AA','C_AB','C_BA','C_BB'].forEach(id => {
+    document.getElementById(id).addEventListener('input', debouncedFull);
+  });
+
+  // ── Sliders (immediate)
+  document.getElementById('slider-p').addEventListener('input', sliderUpdate);
+  document.getElementById('slider-q').addEventListener('input', sliderUpdate);
+
+  // ── Preset buttons
+  document.querySelectorAll('.btn-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const preset = PRESETS[btn.dataset.preset];
+      if (!preset) return;
+      state.R = Object.assign({}, preset.R);
+      state.C = Object.assign({}, preset.C);
+      writeMatrix();
+      state.pStar = computePStar(state.R);
+      state.qStar = computeQStar(state.C);
+      snapSlidersToNash();
+      render();
+    });
+  });
+});
+</script>
+</body>
+</html>
