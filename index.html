@@ -414,11 +414,14 @@
       <div class="card-title">Game Presets</div>
       <div class="preset-section">
         <div class="preset-row">
+          <button class="btn-preset" data-preset="football">Football</button>
           <button class="btn-preset" data-preset="matching_pennies">Matching Pennies</button>
-          <button class="btn-preset" data-preset="battle_of_sexes">Battle of Sexes</button>
         </div>
         <div class="preset-row">
+          <button class="btn-preset" data-preset="battle_of_sexes">Battle of Sexes</button>
           <button class="btn-preset" data-preset="hawk_dove">Hawk-Dove</button>
+        </div>
+        <div class="preset-row">
           <button class="btn-preset" data-preset="prisoners_dilemma">Prisoner's Dilemma</button>
         </div>
       </div>
@@ -458,8 +461,8 @@
    STATE
 ═══════════════════════════════════════════════════════════════ */
 const state = {
-  R: { AA: 1, AB: -1, BA: -1, BB: 1 },
-  C: { AA: -1, AB: 1, BA: 1, BB: -1 },
+  R: { AA: 0, AB: 1, BA: 1, BB: 0 },
+  C: { AA: 1, AB: 0, BA: 0, BB: 1 },
   p: 0.5,
   q: 0.5,
   pStar: null,
@@ -470,6 +473,10 @@ const state = {
    PRESETS
 ═══════════════════════════════════════════════════════════════ */
 const PRESETS = {
+  football: {
+    R: { AA: 0, AB: 1, BA: 1, BB: 0 },
+    C: { AA: 1, AB: 0, BA: 0, BB: 1 }
+  },
   matching_pennies: {
     R: { AA: 1,  AB: -1, BA: -1, BB: 1  },
     C: { AA: -1, AB: 1,  BA: 1,  BB: -1 }
