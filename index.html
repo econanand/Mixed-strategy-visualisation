@@ -415,14 +415,11 @@
       <div class="preset-section">
         <div class="preset-row">
           <button class="btn-preset" data-preset="football">Football</button>
-          <button class="btn-preset" data-preset="matching_pennies">Matching Pennies</button>
-        </div>
-        <div class="preset-row">
-          <button class="btn-preset" data-preset="battle_of_sexes">Battle of Sexes</button>
-          <button class="btn-preset" data-preset="hawk_dove">Hawk-Dove</button>
+          <button class="btn-preset" data-preset="coordination_game">Coordination Game</button>
         </div>
         <div class="preset-row">
           <button class="btn-preset" data-preset="prisoners_dilemma">Prisoner's Dilemma</button>
+          <button class="btn-preset" data-preset="hawk_dove">Hawk-Dove</button>
         </div>
       </div>
     </div>
@@ -477,21 +474,17 @@ const PRESETS = {
     R: { AA: 0, AB: 1, BA: 1, BB: 0 },
     C: { AA: 1, AB: 0, BA: 0, BB: 1 }
   },
-  matching_pennies: {
-    R: { AA: 1,  AB: -1, BA: -1, BB: 1  },
-    C: { AA: -1, AB: 1,  BA: 1,  BB: -1 }
-  },
-  battle_of_sexes: {
-    R: { AA: 2, AB: 0, BA: 0, BB: 1 },
-    C: { AA: 1, AB: 0, BA: 0, BB: 2 }
-  },
-  hawk_dove: {
-    R: { AA: -1, AB: 2, BA: 0, BB: 0 },
-    C: { AA: -1, AB: 0, BA: 2, BB: 0 }
+  coordination_game: {
+    R: { AA: 4, AB: 1, BA: 3, BB: 2 },
+    C: { AA: 4, AB: 3, BA: 1, BB: 2 }
   },
   prisoners_dilemma: {
     R: { AA: 3, AB: 0, BA: 5, BB: 1 },
     C: { AA: 3, AB: 5, BA: 0, BB: 1 }
+  },
+  hawk_dove: {
+    R: { AA: -1, AB: 2, BA: 0, BB: 0 },
+    C: { AA: -1, AB: 0, BA: 2, BB: 0 }
   }
 };
 
