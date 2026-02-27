@@ -978,21 +978,21 @@ function updateEquations(s) {
   document.getElementById('eq1').innerHTML = `
     <div class="eq-row">
       <span class="eq-color-bar" style="background:${COLORS.rowA}"></span>
-      <span class="eq-text">E[Row|A] = <em>p</em>·${fmtCoeff(R.AA)} + (1−<em>p</em>)·${fmtCoeff(R.AB)}</span>
+      <span class="eq-text">y<sup>Row</sup><sub>A</sub> = <em>p</em>·${fmtCoeff(R.AA)} + (1−<em>p</em>)·${fmtCoeff(R.AB)}</span>
     </div>
     <div class="eq-row">
       <span class="eq-color-bar" style="background:${COLORS.rowB}"></span>
-      <span class="eq-text">E[Row|B] = <em>p</em>·${fmtCoeff(R.BA)} + (1−<em>p</em>)·${fmtCoeff(R.BB)}</span>
+      <span class="eq-text">y<sup>Row</sup><sub>B</sub> = <em>p</em>·${fmtCoeff(R.BA)} + (1−<em>p</em>)·${fmtCoeff(R.BB)}</span>
     </div>`;
 
   document.getElementById('eq2').innerHTML = `
     <div class="eq-row">
       <span class="eq-color-bar" style="background:${COLORS.colA}"></span>
-      <span class="eq-text">E[Col|A] = <em>q</em>·${fmtCoeff(C.AA)} + (1−<em>q</em>)·${fmtCoeff(C.BA)}</span>
+      <span class="eq-text">y<sup>Col</sup><sub>A</sub> = <em>q</em>·${fmtCoeff(C.AA)} + (1−<em>q</em>)·${fmtCoeff(C.BA)}</span>
     </div>
     <div class="eq-row">
       <span class="eq-color-bar" style="background:${COLORS.colB}"></span>
-      <span class="eq-text">E[Col|B] = <em>q</em>·${fmtCoeff(C.AB)} + (1−<em>q</em>)·${fmtCoeff(C.BB)}</span>
+      <span class="eq-text">y<sup>Col</sup><sub>B</sub> = <em>q</em>·${fmtCoeff(C.AB)} + (1−<em>q</em>)·${fmtCoeff(C.BB)}</span>
     </div>`;
 }
 
