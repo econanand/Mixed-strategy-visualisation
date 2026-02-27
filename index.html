@@ -307,6 +307,44 @@
       height: 280px;
     }
 
+    /* ── Payoff Equations ── */
+    .payoff-equations {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      padding: 7px 10px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 6px;
+      border-left: 3px solid var(--border);
+    }
+
+    .eq-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .eq-color-bar {
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .eq-text {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .eq-text em {
+      font-style: italic;
+      color: var(--text);
+      font-weight: 600;
+    }
+
     /* Responsive */
     @media (max-width: 900px) {
       .app-layout {
@@ -433,6 +471,7 @@
       <div class="card-title">
         Graph 1 — Row Player Expected Payoffs vs <em>p</em>
       </div>
+      <div id="eq1" class="payoff-equations"></div>
       <div id="graph1" class="graph-div"></div>
     </div>
 
@@ -440,6 +479,7 @@
       <div class="card-title">
         Graph 2 — Column Player Expected Payoffs vs <em>q</em>
       </div>
+      <div id="eq2" class="payoff-equations"></div>
       <div id="graph2" class="graph-div"></div>
     </div>
 
@@ -921,6 +961,42 @@ function updateNashPanel(s) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   PAYOFF EQUATIONS
+═══════════════════════════════════════════════════════════════ */
+
+/** Format a coefficient for display in equations.
+ *  Integers shown as-is; decimals rounded to 2 dp with trailing zeros stripped.
+ *  Negative values wrapped in parentheses so the sign reads naturally. */
+function fmtCoeff(n) {
+  const s = Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(2)).toString();
+  return n < 0 ? `(${s})` : s;
+}
+
+function updateEquations(s) {
+  const R = s.R, C = s.C;
+
+  document.getElementById('eq1').innerHTML = `
+    <div class="eq-row">
+      <span class="eq-color-bar" style="background:${COLORS.rowA}"></span>
+      <span class="eq-text">E[Row|A] = <em>p</em>·${fmtCoeff(R.AA)} + (1−<em>p</em>)·${fmtCoeff(R.AB)}</span>
+    </div>
+    <div class="eq-row">
+      <span class="eq-color-bar" style="background:${COLORS.rowB}"></span>
+      <span class="eq-text">E[Row|B] = <em>p</em>·${fmtCoeff(R.BA)} + (1−<em>p</em>)·${fmtCoeff(R.BB)}</span>
+    </div>`;
+
+  document.getElementById('eq2').innerHTML = `
+    <div class="eq-row">
+      <span class="eq-color-bar" style="background:${COLORS.colA}"></span>
+      <span class="eq-text">E[Col|A] = <em>q</em>·${fmtCoeff(C.AA)} + (1−<em>q</em>)·${fmtCoeff(C.BA)}</span>
+    </div>
+    <div class="eq-row">
+      <span class="eq-color-bar" style="background:${COLORS.colB}"></span>
+      <span class="eq-text">E[Col|B] = <em>q</em>·${fmtCoeff(C.AB)} + (1−<em>q</em>)·${fmtCoeff(C.BB)}</span>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RENDER
 ═══════════════════════════════════════════════════════════════ */
 function render() {
@@ -933,6 +1009,7 @@ function render() {
   Plotly.react('graph3', g3.traces, g3.layout, PLOTLY_CFG);
 
   updateNashPanel(state);
+  updateEquations(state);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1019,6 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Plotly.newPlot('graph2', g2.traces, g2.layout, PLOTLY_CFG);
   Plotly.newPlot('graph3', g3.traces, g3.layout, PLOTLY_CFG);
   updateNashPanel(state);
+  updateEquations(state);
 
   // ── Matrix inputs
   const debouncedFull = debounce(fullUpdate, 150);
